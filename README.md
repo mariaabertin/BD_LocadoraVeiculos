@@ -69,5 +69,3 @@ Simplifica joins, garante performance e evita problemas de FK durante a evoluç�
 5.4 Filial de Retirada e Filial de Devolução separadas
 Pensado para manutenção de cenários reais, como retirar em Brasília e devolver em Goiânia, idealizando uma locação para viagem de carro, por exemplo.
 
-6. Vídeo explicativo
-https://youtu.be/v7YGQsx3JME
