@@ -1,0 +1,112 @@
+USE LOCADORA;
+-- Evolução de esquema (ALTER/TRUNCATE/DROP/CONSTRAINT)
+
+-- Percebi que para facilitar o acesso da tabela pelos JOINs, é preciso que tenham apenas uma PK
+-- comecei fazendo DROP das PKs
+ALTER TABLE RESERVA
+DROP PRIMARY KEY;
+-- adicionei a unica PK que precisava
+ALTER TABLE RESERVA
+ADD PRIMARY KEY (idRESERVA);
+
+
+-- mesma coisa com a tabela LOCACAO, fazendo DROP das PKs
+ALTER TABLE LOCACAO
+DROP PRIMARY KEY;
+-- adicionei a unica PK que precisava
+ALTER TABLE LOCACAO
+ADD PRIMARY KEY (IDLOCACAO);
+-- adicionei a FK de referencia à tabela RESERVA para manter a integridade do relacionamento delas
+ALTER TABLE LOCACAO
+ADD CONSTRAINT fk_LOCACAO_RESERVA1
+FOREIGN KEY (IDRESERVA)
+REFERENCES RESERVA(idRESERVA);
+
+-- SELECT para ver se tinha realmente deixado todas com somente 1 PK
+SELECT 
+    TABLE_NAME,
+    COUNT(*) AS qtdColunasPk
+FROM 
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE 
+    TABLE_SCHEMA = 'LOCADORA'
+    AND CONSTRAINT_NAME = 'PRIMARY'
+GROUP BY 
+    TABLE_NAME
+HAVING 
+    COUNT(*) > 1;
+
+-- SELECT para ver as referencias de PK de cada uma das duas tabelas alteradas
+-- maneira de conseguir ter certeza que o trabalho de alteracao foi correto
+SELECT 
+    TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME
+FROM 
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE 
+    TABLE_SCHEMA = 'LOCADORA'
+    AND TABLE_NAME = 'LOCACAO'
+    AND REFERENCED_TABLE_NAME IS NOT NULL;
+    
+SELECT 
+    TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME
+FROM 
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE 
+    TABLE_SCHEMA = 'LOCADORA'
+    AND TABLE_NAME = 'RESERVA'
+    AND REFERENCED_TABLE_NAME IS NOT NULL;
+
+
+-- Decidi trazer integridade à kilometragem das locações
+ALTER TABLE LOCACAO
+ADD CONSTRAINT chk_km_validacao
+CHECK (KMDEVOLUCAO >= KMRETIRADA);
+
+-- Fazendo a checkagem da validação de caracteres nas placas dos carros
+ALTER TABLE VEICULO
+ADD CONSTRAINT chk_placa_length
+CHECK (CHAR_LENGTH(PLACA) = 7);
+
+
+-- CRIEI UMA TABELA DE PONTO DOS FUNCIONARIOS
+CREATE TABLE IF NOT EXISTS LOGACESSOFUNC (
+    idLOG INT AUTO_INCREMENT PRIMARY KEY,
+    DESCRICAOLOG VARCHAR(100),
+    DATAHORALOG DATETIME
+);
+-- COLOQUEI INFORMACOES DE ENTRADA E SAIDA
+INSERT INTO `locadora`.`LOGACESSOFUNC` (`DESCRICAOLOG`, `DATAHORALOG`) VALUES ('ENTRADA F1', '2025-07-02 08:55:42');
+INSERT INTO `locadora`.`LOGACESSOFUNC` (`DESCRICAOLOG`, `DATAHORALOG`) VALUES ('SAIDA F1', '2025-07-02 17:55:42');
+SELECT * FROM LOGACESSOFUNC;
+-- FIZ O TRUNCATE DA TABELA
+TRUNCATE TABLE LOGACESSOFUNC;
+
+use locadora;
+-- Levando em consideracao a adição da Tabela STATUS
+-- preciso fazer o DROP da coluna para adicioná-la como FK
+ALTER TABLE VEICULO
+DROP COLUMN STATUSVEICULO;
+
+-- Adicionando a nova coluna que vai receber a FK
+ALTER TABLE VEICULO
+ADD COLUMN IDSTATUS INT NOT NULL;
+
+-- Adicionando a FK
+ALTER TABLE VEICULO
+ADD CONSTRAINT fk_status_veiculo
+FOREIGN KEY (IDSTATUS)
+REFERENCES STATUSVEICULO(idSTATUS);
+
+
+-- Percebi que a DATADEVOLUCAO e KMDEVOLUCAO da locacao precisa permitir valor NULL 
+-- pois no momento que é criada não tem a informação da devolução
+ALTER TABLE LOCACAO
+MODIFY COLUMN DATADEVOLUCAO DATE NULL;
+
+ALTER TABLE LOCACAO
+MODIFY COLUMN KMDEVOLUCAO INT NULL;
+
+
+
+
+
